@@ -1,5 +1,5 @@
-import { CellClient } from "./cell-client";
 import { InstalledCell } from "@holochain/conductor-api";
+import { CellClient } from "./cell-client";
 import { BaseClient } from "./base-client";
 export declare class HoloClient extends BaseClient implements CellClient {
     protected connection: any;
