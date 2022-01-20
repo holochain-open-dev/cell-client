@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/holochain-open-dev/cell-client#readme",
   "dependencies": {
-    "@holochain/client": "file:~/projects/holochain/core/holochain-client-js"
+    "@holochain/client": "^0.3.2"
   },
   "devDependencies": {
     "@holo-host/web-sdk": "^0.5.3",
