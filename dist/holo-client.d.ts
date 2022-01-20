@@ -1,11 +1,17 @@
-import { InstalledCell } from "@holochain/conductor-api";
+import { AppSignalCb, InstalledCell } from "@holochain/client";
 import { CellClient } from "./cell-client";
 import { BaseClient } from "./base-client";
-export declare class HoloClient extends BaseClient implements CellClient {
-    protected connection: any;
+export declare class WebSdkClient extends BaseClient {
+    connection: any;
+    constructor(url: string, branding: any);
+}
+export declare class HoloClient implements CellClient {
+    protected connection: WebSdkClient;
     protected cellData: InstalledCell;
-    protected branding: any;
-    constructor(connection: any, cellData: InstalledCell, branding: any);
-    get cellId(): import("@holochain/conductor-api").CellId;
+    constructor(connection: WebSdkClient, cellData: InstalledCell);
+    get cellId(): import("@holochain/client").CellId;
     callZome(zomeName: string, fnName: string, payload: any): Promise<any>;
+    addSignalHandler(signalHandler: AppSignalCb): Promise<{
+        unsubscribe: () => void;
+    }>;
 }
