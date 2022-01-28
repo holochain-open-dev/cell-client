@@ -9,7 +9,7 @@ Note that this will only be useful until there is a unified API for both cases.
 ## Installing
 
 ```bash
-npm i "https://github.com/holochain-open-dev/cell-client#build"
+npm i @holochain-open-dev/cell-client
 ```
 
 ## Connecting to Holochain
