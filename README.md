@@ -73,8 +73,17 @@ const response = await client.callZome(cellId, "my-zome", "my_fn_name", {
   this: "is a sample payload",
 });
 
-client.addSignalHandler((signal) => console.log("Received signal from any of the cells", signal));
+const { unsubscribe } = client.addSignalHandler((signal) =>
+  console.log("Received signal from any of the cells", signal)
+);
+
+...
+
+// You can unsubscribe from listening to the signal whenever needed
+unsubscribe();
 ```
+
+Here, use `BaseClient` instead of `HolochainClient` or `HoloClient` if you want your calls to be Holo/Holochain agnostic.
 
 ### CellClient
 
