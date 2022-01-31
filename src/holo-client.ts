@@ -1,36 +1,76 @@
-import { AppSignalCb, InstalledCell } from "@holochain/client";
+import { AppSignalCb, CellId, InstalledAppInfo } from "@holochain/client";
 import WebSdk from "@holo-host/web-sdk";
 const WebSdkConnection = WebSdk.Connection;
 
-import { CellClient } from "./cell-client";
 import { BaseClient } from "./base-client";
 
-export class WebSdkClient extends BaseClient {
-  connection: any;
-  constructor(url: string, branding: any) {
-    super();
+export type Branding = {
+  app_name: string;
+  logo_url?: string;
+  info_link?: string;
+  publisher_name?: string;
+  skip_registration?: boolean;
+};
 
-    this.connection = new WebSdkConnection(
+export class HoloClient extends BaseClient {
+  private constructor(
+    protected connection: any,
+    public appInfo: InstalledAppInfo
+  ) {
+    super();
+  }
+
+  static async connect(
+    url: string,
+    installed_app_id: string,
+    branding: Branding
+  ): Promise<HoloClient> {
+    let handleSignal: AppSignalCb | undefined = undefined;
+
+    const connection = new WebSdkConnection(
       url,
-      (s: any) => this.handleSignal(s),
+      (s: any) => handleSignal && handleSignal(s),
       branding
     );
-  }
-}
+    await connection.ready();
+    const appInfo: InstalledAppInfo = await connection.appInfo(
+      installed_app_id
+    );
 
-export class HoloClient implements CellClient {
-  constructor(
-    protected connection: WebSdkClient,
-    protected cellData: InstalledCell
-  ) {}
+    const client = new HoloClient(connection, appInfo);
+    handleSignal = (s) => client.handleSignal(s);
 
-  get cellId() {
-    return this.cellData.cell_id;
+    return client;
   }
 
-  async callZome(zomeName: string, fnName: string, payload: any): Promise<any> {
+  async signIn() {
+    await this.connection.signIn();
+    this.refetchAppInfo();
+  }
+  async signUp() {
+    await this.connection.signUp();
+    this.refetchAppInfo();
+  }
+  async signOut() {
+    await this.connection.signOut();
+    this.refetchAppInfo();
+  }
+
+  async callZome(
+    cellId: CellId,
+    zomeName: string,
+    fnName: string,
+    payload: any
+  ): Promise<any> {
+    const cellData = this.cellData(cellId);
+
+    if (!cellData)
+      throw new Error(
+        "There is no cell with the given CellId for the connected app"
+      );
+
     const result = await this.connection.connection.zomeCall(
-      this.cellData.role_id,
+      cellData?.role_id,
       zomeName,
       fnName,
       payload
@@ -42,9 +82,10 @@ export class HoloClient implements CellClient {
     return result;
   }
 
-  addSignalHandler(
-    signalHandler: AppSignalCb
-  ): Promise<{ unsubscribe: () => void }> {
-    return this.connection.addSignalHandler(signalHandler);
+  private async refetchAppInfo() {
+    const appInfo: InstalledAppInfo = await this.connection.appInfo(
+      this.appInfo.installed_app_id
+    );
+    this.appInfo = appInfo;
   }
 }

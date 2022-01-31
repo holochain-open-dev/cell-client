@@ -12,105 +12,94 @@ Note that this will only be useful until there is a unified API for both cases.
 npm i @holochain-open-dev/cell-client
 ```
 
-## Connecting to Holochain
+## Setup
+
+### Connecting to Holochain
 
 ```ts
 import { HolochainClient } from "@holochain-open-dev/cell-client";
-import { AppWebsocket } from "@holochain/client";
+import { RoleId } from "@holochain/client";
 
-async function setupHolochainClient() {
-  const appWs = await AppWebsocket.connect("ws://localhost:8888");
+async function setupClient(roleId: RoleId) {
+  const installed_app_id = "test-app";
+  const client: HolochainClient = await HolochainClient.connect(
+    "ws://localhost:8888",
+    installed_app_id
+  );
 
-  const appInfo = await appWs.appInfo({
-    installed_app_id: "test-app",
-  });
-  const cellData = appInfo.cell_data[0];
-
-  return new HolochainClient(appWs, cellData);
+  return client;
 }
 ```
 
-See all documentation for the `AppWebsocket` [here](https://github.com/holochain/holochain-client-js).
-
-## Connecting to Chaperone (Holo)
+### Connecting to Chaperone (Holo)
 
 ```ts
-import { WebSdkClient, HoloClient } from "@holochain-open-dev/cell-client";
+import { HoloClient } from "@holochain-open-dev/cell-client";
+import { RoleId } from "@holochain/client";
 
-async function setupHoloClient() {
-  const client = new WebSdkClient("https://devnet-chaperone.holo.host", {
-    app_name: "elemental-chess",
-    skip_registration: true,
-  });
+async function setupClient(roleId: RoleId) {
+  const installed_app_id = "test-app";
+  const branding: Branding = {
+    app_name: "My cool app",
+  };
+  const client: HoloClient = await HoloClient.connect(
+    "https://devnet-chaperone.holo.host",
+    installed_app_id,
+    branding
+  );
 
-  await client.connection.ready();
-  await client.connection.signIn();
+  // Most likely you want to sign in at application startup
+  await client.signIn();
 
-  const appInfo = await client.connection.appInfo("my-app-id");
-
-  if (!appInfo.cell_data)
-    throw new Error(`Holo appInfo() failed: ${JSON.stringify(appInfo)}`);
-
-  const cellData = appInfo.cell_data[0];
-
-  if (!(cellData.cell_id[0] instanceof Uint8Array)) {
-    cellData.cell_id = [
-      new Uint8Array((cellData.cell_id[0] as any).data),
-      new Uint8Array((cellData.cell_id[1] as any).data),
-    ] as any;
-  }
-  return new HoloClient(client, cellData);
+  return client;
 }
 ```
-
-See all documentation for the `WebSdkConnection` [here](https://github.com/holo-host/web-sdk).
 
 ## Usage
 
+There are two layers that you can use:
+
+### HolochainClient / HoloClient (both extend from BaseClient)
+
+Use this layer if you need to be switching which cell you are making the call to. This is specially needed in apps that use the pattern of cloning cells.
+
 ```ts
-import { CellClient } from "@holochain-open-dev/cell-client";
-import { AgentPubKeyB64 } from "@holochain-open-dev/core-types";
+const client: HolochainClient = await setupClient();
 
-export class InvitationsService {
-  constructor(
-    public cellClient: CellClient,
-    public zomeName: string = "invitations"
-  ) {}
+// Find the cell you want to make the call to
+const cellId = client.appInfo.cell_data[0].cell_id;
 
-  async sendInvitation(input: AgentPubKeyB64[]): Promise<void> {
-    return this.cellClient.callZome(this.zomeName, "send_invitation", input);
-  }
-}
+const response = await client.callZome(cellId, "my-zome", "my_fn_name", {
+  this: "is a sample payload",
+});
+
+client.addSignalHandler((signal) => console.log("Received signal from any of the cells", signal));
 ```
 
-Now you can instantiate the `InvitationsService` both with `HoloClient` and `HolochainClient`:
+### CellClient
+
+Use this layer if you only have one cell, or predefined set of cells.
 
 ```ts
-async function setupCellClient(holo: boolean) {
-  if (holo) return setupHoloClient();
-  else setupHolochainClient();
-}
+const client: HolochainClient = await setupClient();
 
-async function setupService() {
-  const cellClient = setupCellClient(process.env.IS_HOLO_CONTEXT);
-  return new InvitationService(cellClient);
-}
-```
+const roleId = "my-cell-role";
+// Find the cell you want to make the call to
+const cellData = client.cellDataByRoleId(roleId);
 
-## Adding signal handlers
+const cellClient = client.forCell(cellData);
 
-```ts
-export class InvitationsStore {
-  public invitations: Dictionary<InvitationEntryInfo> = {};
+// Now the calls and signals will only interact with the desired cell
+const response = await client.callZome("my-zome", "my_fn_name", {
+  this: "is a sample payload",
+});
 
-  constructor(protected cellClient: CellClient) {
-    cellClient
-      .addSignalHandler((signal) => {
-        // Do something with the signal: eg. update invitations dictionary
-      })
-      .then(({ unsubscribe }) => {
-        this.unsubscribe = unsubscribe;
-      });
-  }
-}
+const { unsubscribe } = client.addSignalHandler((signal) =>
+  console.log(`Received signal for cell role ${roleId}`, signal)
+);
+
+...
+
+// You can unsubscribe from listening to the signal whenever needed
+unsubscribe();
 ```
