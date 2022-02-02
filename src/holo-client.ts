@@ -69,7 +69,7 @@ export class HoloClient extends BaseClient {
         "There is no cell with the given CellId for the connected app"
       );
 
-    const result = await this.connection.connection.zomeCall(
+    const result = await this.connection.zomeCall(
       cellData?.role_id,
       zomeName,
       fnName,
