@@ -45,15 +45,15 @@ export class HoloClient extends BaseClient {
 
   async signIn() {
     await this.connection.signIn();
-    this.refetchAppInfo();
+    await this.refetchAppInfo();
   }
   async signUp() {
     await this.connection.signUp();
-    this.refetchAppInfo();
+    await this.refetchAppInfo();
   }
   async signOut() {
     await this.connection.signOut();
-    this.refetchAppInfo();
+    await this.refetchAppInfo();
   }
 
   async callZome(
