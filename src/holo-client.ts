@@ -87,6 +87,6 @@ export class HoloClient extends BaseClient {
     const appInfo: InstalledAppInfo = await this.connection.appInfo(
       this.appInfo.installed_app_id
     );
-    this.appInfo = appInfo;
+    this.appInfo = fixHoloAppInfo(appInfo);
   }
 }
