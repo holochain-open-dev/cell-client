@@ -3,6 +3,7 @@ import WebSdk from "@holo-host/web-sdk";
 const WebSdkConnection = WebSdk.Connection;
 
 import { BaseClient } from "./base-client";
+import { fixHoloAppInfo } from "./utils";
 
 export type Branding = {
   app_name: string;
@@ -37,7 +38,7 @@ export class HoloClient extends BaseClient {
       installed_app_id
     );
 
-    const client = new HoloClient(connection, appInfo);
+    const client = new HoloClient(connection, fixHoloAppInfo(appInfo));
     handleSignal = (s) => client.handleSignal(s);
 
     return client;
