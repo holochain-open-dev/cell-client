@@ -4,7 +4,8 @@ import {
   InstalledAppInfo,
   InstalledCell,
 } from "@holochain/client";
-import WebSdkApi from "@holo-host/web-sdk";
+//@ts-ignore
+import WebSdkApi from "@holo-host/web-sdk/src/index";
 
 import { AgnosticClient } from "./agnostic-client";
 import { areEqual, fixHoloAppInfo } from "./utils";

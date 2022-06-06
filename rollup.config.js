@@ -19,7 +19,10 @@ export default {
     }),
     typescript(),
     builtins(),
-    resolve(),
+    resolve({
+      preferBuiltins: false,
+      browser: true
+    }),
     commonjs(),
   ],
 };

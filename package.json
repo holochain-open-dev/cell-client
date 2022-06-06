@@ -32,7 +32,7 @@
     "@types/lodash-es": "^4.17.5",
     "gh-pages": "^3.1.0",
     "rimraf": "^3.0.2",
-    "rollup": "^2.51.2",
+    "rollup": "^2.75.0",
     "rollup-plugin-node-builtins": "^2.1.2",
     "tslib": "^2.3.0",
     "typescript": "^4.3.2"
