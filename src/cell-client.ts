@@ -1,20 +1,9 @@
-import { AppSignalCb, AppWebsocket, InstalledCell } from "@holochain/client";
-import { BaseClient } from "./base-client";
+import { AppSignalCb, InstalledCell } from "@holochain/client";
+import { AgnosticClient } from "./agnostic-client";
 import { areEqual } from "./utils";
 
 export class CellClient {
-  constructor(
-    protected client: BaseClient,
-    protected cellData: InstalledCell
-  ) {}
-
-  get cellId() {
-    return this.cellData.cell_id;
-  }
-
-  get cellRoleId() {
-    return this.cellData.role_id;
-  }
+  constructor(protected client: AgnosticClient, public cell: InstalledCell) {}
 
   callZome(
     zomeName: string,
@@ -23,7 +12,7 @@ export class CellClient {
     timeout = 15000
   ): Promise<any> {
     return this.client.callZome(
-      this.cellId,
+      this.cell.cell_id,
       zomeName,
       fnName,
       payload,
@@ -33,7 +22,7 @@ export class CellClient {
 
   addSignalHandler(signalHandler: AppSignalCb): { unsubscribe: () => void } {
     const { unsubscribe } = this.client.addSignalHandler((signal) => {
-      if (areEqual(signal.data.cellId, this.cellId)) {
+      if (areEqual(signal.data.cellId, this.cell.cell_id)) {
         signalHandler(signal);
       }
     });

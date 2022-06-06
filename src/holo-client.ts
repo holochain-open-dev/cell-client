@@ -1,9 +1,14 @@
-import { AppSignalCb, CellId, InstalledAppInfo } from "@holochain/client";
-import WebSdk from "@holo-host/web-sdk";
-const WebSdkConnection = WebSdk.Connection;
+import {
+  AppSignalCb,
+  CellId,
+  InstalledAppInfo,
+  InstalledCell,
+} from "@holochain/client";
+import WebSdkApi from "@holo-host/web-sdk";
 
-import { BaseClient } from "./base-client";
-import { fixHoloAppInfo } from "./utils";
+import { AgnosticClient } from "./agnostic-client";
+import { areEqual, fixHoloAppInfo } from "./utils";
+import { SignalHandler } from "./signal-handler";
 
 export type Branding = {
   app_name: string;
@@ -13,13 +18,13 @@ export type Branding = {
   skip_registration?: boolean;
 };
 
-export class HoloClient extends BaseClient {
+export class HoloClient implements AgnosticClient {
+  signalHandler = new SignalHandler();
+
   private constructor(
     protected connection: any,
     public appInfo: InstalledAppInfo
-  ) {
-    super();
-  }
+  ) {}
 
   static async connect(
     url: string,
@@ -28,7 +33,7 @@ export class HoloClient extends BaseClient {
   ): Promise<HoloClient> {
     let handleSignal: AppSignalCb | undefined = undefined;
 
-    const connection = new WebSdkConnection(
+    const connection = new WebSdkApi(
       url,
       (s: any) => handleSignal && handleSignal(s),
       branding
@@ -39,7 +44,7 @@ export class HoloClient extends BaseClient {
     );
 
     const client = new HoloClient(connection, fixHoloAppInfo(appInfo));
-    handleSignal = (s) => client.handleSignal(s);
+    handleSignal = (s) => client.signalHandler.handleSignal(s);
 
     return client;
   }
@@ -55,6 +60,11 @@ export class HoloClient extends BaseClient {
   async signOut() {
     await this.connection.signOut();
     await this.refetchAppInfo();
+  }
+
+  // Get the cell data for the given cellId
+  cellData(cellId: CellId): InstalledCell | undefined {
+    return this.appInfo.cell_data.find((c) => areEqual(c.cell_id, cellId));
   }
 
   async callZome(
@@ -81,6 +91,10 @@ export class HoloClient extends BaseClient {
       throw new Error(result.payload.message);
     }
     return result;
+  }
+
+  addSignalHandler(signalHandler: AppSignalCb): { unsubscribe: () => void } {
+    return this.signalHandler.addSignalHandler(signalHandler);
   }
 
   private async refetchAppInfo() {

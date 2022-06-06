@@ -2,40 +2,19 @@ import {
   AppSignalCb,
   AppWebsocket,
   CellId,
-  InstalledAppInfo,
-  InstalledCell,
-  RoleId,
 } from "@holochain/client";
-import { BaseClient } from "./base-client";
-import { CellClient } from "./cell-client";
+import { WsClient } from "@holochain/client/lib/websocket/client";
+import { AgnosticClient } from "./agnostic-client";
+import { SignalHandler } from "./signal-handler";
 
-export class HolochainClient extends BaseClient {
-  private constructor(
-    protected appWebsocket: AppWebsocket,
-    public appInfo: InstalledAppInfo
-  ) {
-    super();
-  }
+export class HolochainClient implements AgnosticClient {
+  signalHandler = new SignalHandler();
 
-  static async connect(
-    url: string,
-    installed_app_id: string,
-    timeout: number = 15000
-  ): Promise<HolochainClient> {
-    let handleSignal: AppSignalCb | undefined = undefined;
-    const appWs = await AppWebsocket.connect(
-      url,
-      timeout,
-      (s) => handleSignal && handleSignal(s)
+  constructor(public appWebsocket: AppWebsocket) {
+    appWebsocket.client = new WsClient(
+      appWebsocket.client.socket,
+      this.signalHandler.handleSignal
     );
-
-    const appInfo = await appWs.appInfo({ installed_app_id });
-
-    const client = new HolochainClient(appWs, appInfo);
-
-    handleSignal = (s) => client.handleSignal(s);
-
-    return client;
   }
 
   callZome(
@@ -58,4 +37,7 @@ export class HolochainClient extends BaseClient {
     );
   }
 
+  addSignalHandler(signalHandler: AppSignalCb): { unsubscribe: () => void } {
+    return this.signalHandler.addSignalHandler(signalHandler);
+  }
 }

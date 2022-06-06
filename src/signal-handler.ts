@@ -14,7 +14,7 @@ export class SignalHandler {
     };
   }
 
-  protected handleSignal(signal: any) {
+  handleSignal(signal: any) {
     for (const handler of this.handlers) {
       handler(signal);
     }
