@@ -23,7 +23,7 @@ export class HoloClient implements AgnosticClient {
   signalHandler = new SignalHandler();
 
   private constructor(
-    protected connection: any,
+    public connection: any,
     public appInfo: InstalledAppInfo
   ) {}
 

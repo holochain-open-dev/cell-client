@@ -51,6 +51,11 @@ async function setupClient() {
   // Most likely you want to sign in at application startup
   await client.signIn();
 
+  const connection = client.connection;
+
+  // Here you can use the WebSdk API, like:
+  connection.on('agent-state', state => console.log(state));
+
   return client;
 }
 ```
