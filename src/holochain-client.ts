@@ -13,7 +13,7 @@ export class HolochainClient implements AgnosticClient {
   constructor(public appWebsocket: AppWebsocket) {
     appWebsocket.client = new WsClient(
       appWebsocket.client.socket,
-      this.signalHandler.handleSignal
+      s => this.signalHandler.handleSignal(s)
     );
   }
 
