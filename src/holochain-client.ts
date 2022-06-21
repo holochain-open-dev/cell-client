@@ -1,5 +1,5 @@
 import { AppSignalCb, AppWebsocket, CellId } from "@holochain/client";
-import { WsClient } from "@holochain/client/lib/api/client";
+import { WsClient } from "./ws-client";
 import { AgnosticClient } from "./agnostic-client";
 import { SignalHandler } from "./signal-handler";
 
