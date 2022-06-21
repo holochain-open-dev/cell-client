@@ -1,9 +1,5 @@
-import {
-  AppSignalCb,
-  AppWebsocket,
-  CellId,
-} from "@holochain/client";
-import { WsClient } from "@holochain/client/lib/websocket/client";
+import { AppSignalCb, AppWebsocket, CellId } from "@holochain/client";
+import { WsClient } from "@holochain/client/lib/api/client";
 import { AgnosticClient } from "./agnostic-client";
 import { SignalHandler } from "./signal-handler";
 
@@ -11,9 +7,8 @@ export class HolochainClient implements AgnosticClient {
   signalHandler = new SignalHandler();
 
   constructor(public appWebsocket: AppWebsocket) {
-    appWebsocket.client = new WsClient(
-      appWebsocket.client.socket,
-      s => this.signalHandler.handleSignal(s)
+    appWebsocket.client = new WsClient(appWebsocket.client.socket, (s) =>
+      this.signalHandler.handleSignal(s)
     );
   }
 
